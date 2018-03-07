@@ -14,6 +14,8 @@
         <b>Created: {{ $post->created_at }}</b>
         <b>Updated: {{ $post->updated_at }}</b>
 
+        <img src="{{ $post->featuredMedia->medium_large->source_url }}" alt="">
+
         <p>
             {!! $post->excerpt !!}
         </p>
