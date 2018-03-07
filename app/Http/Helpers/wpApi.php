@@ -56,7 +56,6 @@ class wpApi {
         return ($query) ? $query : [];
     }
 
-
     /**
      * Protected method to poll and parse the
      * endpoint and decode the JSON response.
@@ -79,6 +78,7 @@ class wpApi {
         $ext->title = $post->title->rendered;
         $ext->author = $this->getAuthor($post->author);
         $ext->slug = $post->slug;
+        $ext->featuredMedia = $this->getFeaturedMedia($post->featured_media);
         $ext->sticky = ($post->sticky) ? true : false;
         $ext->excerpt = $post->excerpt->rendered;
         $ext->content = $post->content->rendered;
@@ -87,6 +87,20 @@ class wpApi {
         $ext->category = $this->getCategory($post->categories[0]);
 
         return $ext;
+    }
+
+    /**
+     * Return the featured media object
+     * @param Integer $id
+     * @return Object
+     */
+    protected function getFeaturedMedia($id) {
+        $media = collect($this->getResponse($this->url . 'media/' . $id));
+        if ($media && isset($media['media_details']) && !is_null($media['media_details']->sizes)) {
+            return $media['media_details']->sizes;
+        } else {
+            return [];
+        }
     }
 
     /**
