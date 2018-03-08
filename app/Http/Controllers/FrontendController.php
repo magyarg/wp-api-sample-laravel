@@ -26,6 +26,7 @@ class FrontendController extends Controller {
      */
     public function index() {
         $posts = $this->api->posts();
+        dd($posts);
         return view('index', compact('posts'));
     }
 

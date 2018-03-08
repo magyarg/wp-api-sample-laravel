@@ -26,7 +26,7 @@ class wpApi {
         $posts = collect($this->getResponse($this->url . 'posts'));
         $formattedObjects = [];
         foreach($posts as $post) {
-            $formattedObjects[] = $this->extractPost($post);
+            $formattedObjects[] = $this->extractPost($post, true);
         }
         return $formattedObjects;
     }
@@ -71,9 +71,10 @@ class wpApi {
      * Extracting a Post response and set a new
      * object with formatted attributes.
      * @param Object $post
+     * @param Boolean $locale - Defaults to false
      * @return Ojbect
      */
-    protected function extractPost($post) {
+    protected function extractPost($post, $locale = false) {
         $ext = (object)[];
         $ext->title = $post->title->rendered;
         $ext->author = $this->getAuthor($post->author);
@@ -86,7 +87,37 @@ class wpApi {
         $ext->updated_at = $post->modified;
         $ext->category = $this->getCategory($post->categories[0]);
 
+        // Active Field extra attributes
+        $ext->extraAttributes = (!is_null($post->acf)) ? $post->acf : [];
+
+        // Extending the translations
+        $ext->translations = ($locale == true) ? $this->getTranslations($post->id) : [];
+
         return $ext;
+    }
+
+    /**
+     * Return the translation object for a single
+     * Post object.
+     * @param Integer $id
+     * @return Object
+     */
+    public function getTranslations($id) {
+        $availableLanguages = collect($this->getResponse($this->url . 'lang'));
+        $translationsPool = [];
+        foreach ($availableLanguages as $language) {
+            $postInstance = $this->getResponse($this->url . 'posts?id' . $id . '&lang=' . $language->code);
+            $post = [];
+            if (!empty($postInstance)) {
+                $post = [
+                    'id' => $postInstance[0]->id,
+                    'slug' => $postInstance[0]->slug,
+                    'title' => $postInstance[0]->title->rendered
+                ];
+            }
+            $translationsPool[$language->code] = $post;
+        }
+        return $translationsPool;
     }
 
     /**
