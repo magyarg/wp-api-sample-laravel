@@ -20,13 +20,18 @@ class wpApi {
 
     /**
      * Returning a new Post object as an array of objects.
+     * @param Integer $category
      * @return Object $formattedObjects
      */
-    public function posts() {
-        $posts = collect($this->getResponse($this->url . 'posts'));
+    public function posts($category = null) {
+        if (!is_null($category)) {
+            $posts = collect($this->getResponse($this->url . 'posts?categories=' . $category));
+        } else {
+            $posts = collect($this->getResponse($this->url . 'posts'));
+        }
         $formattedObjects = [];
         foreach($posts as $post) {
-            $formattedObjects[] = $this->extractPost($post, true);
+            $formattedObjects[] = (is_null($category)) ? $this->extractPost($post, null, true) : $this->extractPost($post, $category, true);
         }
         return $formattedObjects;
     }
@@ -74,7 +79,7 @@ class wpApi {
      * @param Boolean $locale - Defaults to false
      * @return Ojbect
      */
-    protected function extractPost($post, $locale = false) {
+    protected function extractPost($post, $categoryId = null,  $locale = false) {
         $ext = (object)[];
         $ext->title = $post->title->rendered;
         $ext->author = $this->getAuthor($post->author);
@@ -85,15 +90,46 @@ class wpApi {
         $ext->content = $post->content->rendered;
         $ext->created_at = $post->date;
         $ext->updated_at = $post->modified;
-        $ext->category = $this->getCategory($post->categories[0]);
+
+        $bufferCategoryId = (!isset($post->categories[0]) && !is_null($categoryId)) ? $categoryId : $post->categories[0];
+        $ext->category = $this->getCategory($bufferCategoryId);
 
         // Active Field extra attributes
         $ext->extraAttributes = (!is_null($post->acf)) ? $post->acf : [];
 
+        // Gallery like extract
+        $ext->gallery = $this->getGallery($ext->extraAttributes);
+
         // Extending the translations
-        $ext->translations = ($locale == true) ? $this->getTranslations($post->id) : [];
+        // $ext->translations = ($locale == true) ? $this->getTranslations($post->id) : [];
 
         return $ext;
+    }
+
+    /**
+     * Extracts the images into a more human readable
+     * format.
+     * @param Object $attributes
+     * @return Object
+     */
+    public function getGallery($attributes) {
+        $mapAttributes = (!is_null($attributes) && !empty($attributes)) ? $attributes : [];
+        $mapDone = false;
+        $attributePrefix = 'image_';
+        $attributeIndex = 1;
+        $galleryContainer = [];
+
+        while (!$mapDone) {
+            $currentProperty = $attributePrefix . $attributeIndex;
+            if (isset($mapAttributes->$currentProperty)) {
+                $galleryContainer[] = $mapAttributes->$currentProperty->sizes;
+                $attributeIndex++;
+            } else {
+                $mapDone = true;
+            }
+        }
+
+        return $galleryContainer;
     }
 
     /**
