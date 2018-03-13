@@ -26,10 +26,10 @@ class FrontendController extends Controller {
      */
     public function index() {
         // Fetch all posts
-        // $posts = $this->api->posts();
+        $posts = $this->api->posts();
 
         // Fetch posts by category id
-        $posts = $this->api->posts(5);
+        // $posts = $this->api->posts(5);
 
         return view('index', compact('posts'));
     }

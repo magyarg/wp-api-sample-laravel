@@ -121,7 +121,7 @@ class wpApi {
 
         while (!$mapDone) {
             $currentProperty = $attributePrefix . $attributeIndex;
-            if (isset($mapAttributes->$currentProperty)) {
+            if (isset($mapAttributes->$currentProperty) && isset($mapAttributes->$currentProperty->sizes)) {
                 $galleryContainer[] = $mapAttributes->$currentProperty->sizes;
                 $attributeIndex++;
             } else {
@@ -162,6 +162,16 @@ class wpApi {
      * @return Object
      */
     protected function getFeaturedMedia($id) {
+        if ($id == 0) {
+            $media = [];
+            $media['thumbnail']['source_url'] = '';
+            $media['medium']['source_url'] = '';
+            $media['medium_large']['source_url'] = '';
+            $media['large']['source_url'] = '';
+            $media['full']['source_url'] = '';
+
+            return json_decode(json_encode($media));
+        }
         $media = collect($this->getResponse($this->url . 'media/' . $id));
         if ($media && isset($media['media_details']) && !is_null($media['media_details']->sizes)) {
             return $media['media_details']->sizes;
