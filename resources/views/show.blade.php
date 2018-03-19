@@ -20,5 +20,10 @@
         <p>
             {!! $post->content !!}
         </p>
+
+        <!-- Listing all the equipments -->
+        @foreach ($post->extraAttributes->equipment as $equipment)
+            {{ Equipment::get($equipment) }}
+        @endforeach
 </body>
 </html>
